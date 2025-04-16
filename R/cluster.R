@@ -2,7 +2,7 @@ library(glue)
 library(Rtsne)
 library(RColorBrewer)
 
-df <- read.csv("../python/curve_feats_counties.csv")
+df <- read.csv("C:/Users/CaliD/Documents/Homework05_env/Data_mine_us_county/with_geo_household_cnt.csv")
 df <- df[, -which(grepl('2023', names(df)))]
 ts <- read.csv("../python/with_geo_household_cnt.csv")
 
@@ -35,6 +35,37 @@ for(i in seq_along(scenarios)){
            fill=c('blue', 'red'))
 }
 dev.off()
+
+# Implement PCA Before K-Means
+
+library(FactoMineR)
+
+# Exclude the NAME column before PCA
+feature_matrix <- scaled_df[, !names(scaled_df) %in% c("NAME")]
+
+# Run PCA (keep components that explain ~90% variance)
+pca_out <- PCA(feature_matrix, graph = FALSE)
+
+# Choose first few principal components (e.g., top 5)
+pca_scores <- pca_out$ind$coord[, 1:5]
+
+# Add cluster label here
+km_out_pca <- kmeans(pca_scores, centers = 4, nstart = 20)
+
+# Use km_out_pca$cluster instead going forward
+scaled_df$cluster_pca <- km_out_pca$cluster
+
+# also note that means the below visualizations will have to be updated to use cluster_pca
+
+# also doesn't look like they are using an elbow plot to validate k
+
+library(cluster)
+silhouette_vals <- silhouette(km_out$cluster, dist(feature_matrix))
+plot(silhouette_vals)
+
+
+
+# This is K-Means Below -- ? - I wish this document had more labels
 
 scaled_df <- scaled_df[scaled_df$NAME != 'Los Angeles County, California', ]
 ks <- 2:20
