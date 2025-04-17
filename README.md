@@ -1,3 +1,37 @@
+# Cali's Response. 
+
+# Question 0. Summary
+This project analyzes how household structures—specifically married and unmarried-led households—have evolved across U.S. counties from 2009 to 2022. Using fitted polynomial curves to quantify trends like growth rate and stability, the study clusters counties using k-means into meaningful groups. It then applies a random forest classifier trained on Social Vulnerability Index (SVI) metrics to see if household trend clusters can be predicted. Ultimately, it reveals correlations between household changes and social factors like age distribution, poverty, and housing affordability.
+
+# Suggestions 
+
+## Non-Technical 
+
+I think that both the report and the README files would benefit from an improvement in the overall visual appeal and structure of the report. 
+
+One, I would recommend adding in section headers so that reader's can clearly identify sections that they want to read. Some ideas would be, for example, *Data Sources*, *Feature Engineering*, *Clustering Results*, etc.
+
+Two, I would improve the physical data visuals. Right now, they are hard to understand, and no one who is not familiar with the project and the code would understand their objective. As such, I would include labels for the axes, use color-blind friendly palettes, add legends, highlight specific points or important points, etc. 
+
+Three, the word choices in this report a lot to be desired. Many of the statements are vague and ambiguous. As such, I would recommend going back in and adding specific, concrete measurements and descriptions of what they are trying to say / interpret from the graphs.
+
+Four, this is more optional, but a flow diagram dipecting the data pipeline would be a fun addition to enchance the overall readability of the report for those who may not come from data science backgrounds.
+
+## Technical
+
+Issue: The random forest classifier yields ~52–54% accuracy, which is not significantly better than random guessing (given 4 clusters = 25% chance).
+
+Suggestion: Apply dimensionality reduction (PCA or t-SNE) prior to clustering to:
+
+- Visualize the feature space and understand whether the clusters are separable.
+
+- Possibly reduce noise and improve clustering performance.
+
+(See cluster.R with actual code modifications).
+
+I implemented PCA before k-means clustering to reduce feature noise and enhance cluster robustness. The PCA-derived clusters showed improved interpretability and better separation in t-SNE visualizations.
+
+
 # Clusting the US Counties Household Counts
 
 This is homework 5 for Applied Machine Learning (Spring 2025) at Columbia University.
