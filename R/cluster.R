@@ -11,6 +11,7 @@ scaled_df <- as.data.frame(scaled_df)
 scaled_df[['NAME']] <- df$X
 head(scaled_df)
 
+
 scaled_df[['no_curve_married']] <- (is.na(scaled_df[['married.slope_2022']]) - 0.5) * 2
 scaled_df[['no_curve_unmarried']] <- (is.na(scaled_df[['unmarried.slope_2022']]) - 0.5) * 2
 for(i in seq_len(ncol(scaled_df))){
