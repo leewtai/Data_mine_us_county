@@ -1,0 +1,1 @@
+Starting the report with a more clear introduction and motivation showcasing why the project is important is something that the writer lacks. Additionally, many of the graphs are unlabled. Adding labels and captions can help clearly explain the information presented in the visual. Finally, the conclusion can be further strengthened by expanding on the reports implications. 
