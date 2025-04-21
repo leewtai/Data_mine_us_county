@@ -1,0 +1,28 @@
+---
+title: "HW5"
+author: "Nic Gagliano"
+date: "2025-04-18"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Summary
+
+This report is taking data that evaluates social vulnerability and uses the married and unmarried counts of households to help determine the SVI trends over the years within clusters, where these clusters come from different regions in the United States. Clusters with visible trends includes Suffolk, VA and Maricopa County, AZ. This also causes the prediction error of the clusters to be at 52%, as the other two clusters shown have a very low trend visibility.
+
+## Non-technical Suggestion
+
+Firstly, the writing style of this report should be changed. What I mean by this is right away after the first graph in describing the features of both household counts; I have no idea what half of these points are referring to. They are referring to what they can do with the graph, not features, and one of them being "Actual the household count in 2022", has no meaning. 
+
+## Technical Suggestion
+
+To go with the first non-technical suggestion, the labels of the axis to make the graphs more readable. 
+
+A prediction error of 52% is still significantly high in terms of using this method as a reliable source. Changing the clustering method such as decreasing the amount of clusters, or separating the data based on additional factors prior to clustering, such as using the consistent features that appear in cross validation.
+
+## Code
+
+Implemented in cluster.R

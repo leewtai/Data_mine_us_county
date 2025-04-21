@@ -11,6 +11,16 @@ scaled_df <- as.data.frame(scaled_df)
 scaled_df[['NAME']] <- df$X
 head(scaled_df)
 
+#Code to remove under 18 to evaluate without
+under18 <- aggregate(B11002_004E ~ NAME, data = ts, FUN = function(x) any(x > 0))
+names(under18)[2] <- "under18"
+scaled_df <- scaled_df[scaled_df$NAME %in% under18$NAME[!under18$under18], ]
+ts <- ts[ts$NAME %in% under18$NAME[!under18$under18], ]
+
+#Optional code if we want to filter to make it evalaute with only under 18
+#scaled_df <- scaled_df[scaled_df$NAME %in% under18$NAME[!under18$under18], ]
+#ts <- ts[ts$NAME %in% under18$NAME[!under18$under18], ]
+
 scaled_df[['no_curve_married']] <- (is.na(scaled_df[['married.slope_2022']]) - 0.5) * 2
 scaled_df[['no_curve_unmarried']] <- (is.na(scaled_df[['unmarried.slope_2022']]) - 0.5) * 2
 for(i in seq_len(ncol(scaled_df))){
