@@ -21,7 +21,8 @@ Four, this is more optional, but a flow diagram dipecting the data pipeline woul
 
 Issue: The random forest classifier yields ~52–54% accuracy, which is not significantly better than random guessing (given 4 clusters = 25% chance).
 
-I implemented PCA on the scaled feature matrix (excluding non-numeric columns like NAME) and retained the top 5 principal components to reduce noise and enhance cluster separation. I then applied k-means clustering on the PCA scores. The PCA-derived clusters would probably show improved interpretability and clearer separation in t-SNE visualizations. I also added silhouette analysis to validate cluster compactness and separation. Additional evaluation using an elbow plot could further refine the choice of K.
+I would implement PCA on the scaled feature matrix (excluding non-numeric columns like NAME) to reduce dimensionality and filter out noise. Specifically, I’d retain the top 5 principal components, which should capture the majority of the meaningful variance. Then, I’d apply k-means clustering on the resulting PCA scores to improve cluster robustness and interpretability. I’d expect the PCA-derived clusters to show better separation when visualized using t-SNE. To assess cluster quality, I’d also run silhouette analysis, and for further validation, I’d recommend using an elbow plot to evaluate whether 4 clusters is an appropriate choice for K.
+
 
 # Clusting the US Counties Household Counts
 
