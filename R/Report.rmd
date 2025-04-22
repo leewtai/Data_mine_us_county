@@ -1,0 +1,10 @@
+## Summary
+This project investigates the relationship between household composition changes. Specifically, it is investagting the changes in the number of married and unmarried households—and county-level social 
+vulnerability in the U.S. using k-means clustering and t-SNE for visualization. The household data is processed to extract features such as slope,
+acceleration, and curve fit quality from time series data spanning 2009–2023. 
+
+## Non-Technical
+I think that the graphs themeselves are lacking the appropriate labels and lack an context that could help the reader better understand the goals. 
+On that note, I think that the format of the writing could be better organized - perhaps explain why the question is important and an explanation into the
+actual dataset would help elucidate some of the confusions I intially had with this project. As a personal comment, I would say that the 
+abrupt transitions between steps (e.g., from clustering to model prediction) make it hard to follow the logic of the analysis.
