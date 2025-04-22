@@ -1,7 +1,8 @@
 # Cali's Response. 
 
 # Question 0. Summary
-This project analyzes how household structures—specifically married and unmarried-led households—have evolved across U.S. counties from 2009 to 2022. Using fitted polynomial curves to quantify trends like growth rate and stability, the study clusters counties using k-means into meaningful groups. It then applies a random forest classifier trained on Social Vulnerability Index (SVI) metrics to see if household trend clusters can be predicted. Ultimately, it reveals correlations between household changes and social factors like age distribution, poverty, and housing affordability.
+This project attempts to analyze shifts in household composition—specifically households led by married versus unmarried individuals—across U.S. counties from 2009 to 2022. It derives trend features (e.g., slope, acceleration, stability) from polynomial fits of household count time series, but the modeling approach is somewhat brittle due to inconsistent curve fits across counties. These engineered features are then clustered using k-means, though the clusters sometimes capture noise or outlier effects (e.g., Los Angeles forming its own cluster). A random forest classifier is trained on 2020 Social Vulnerability Index (SVI) metrics to predict cluster membership, but the model achieves low accuracy (~52–54%), suggesting that either the features or clusters lack clear separation. While the project shows initiative in combining demographic data with unsupervised learning, the execution reveals limitations in both modeling robustness and interpretability.
+
 
 # Suggestions 
 
@@ -13,7 +14,7 @@ One, I would recommend adding in section headers so that reader's can clearly id
 
 Two, I would improve the physical data visuals. Right now, they are hard to understand, and no one who is not familiar with the project and the code would understand their objective. As such, I would include labels for the axes, use color-blind friendly palettes, add legends, highlight specific points or important points, etc. 
 
-Three, the word choices in this report a lot to be desired. Many of the statements are vague and ambiguous. As such, I would recommend going back in and adding specific, concrete measurements and descriptions of what they are trying to say / interpret from the graphs.
+Three, the word choices in this report leave a lot to be desired. Many of the statements are vague and ambiguous. As such, I would recommend going back in and adding specific, concrete measurements and descriptions of what they are trying to say / interpret from the graphs.
 
 Four, this is more optional, but a flow diagram dipecting the data pipeline would be a fun addition to enchance the overall readability of the report for those who may not come from data science backgrounds.
 
