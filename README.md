@@ -19,6 +19,18 @@ This homework requires you to:
   - Please suggest at least one major technical improvement/correction they should do.
 - Please implement your technical recommendation above in your report. The household data is on CourseWorks `Files/census/`.
 
+## SUMMARY
+
+In this report, the author looks into how changes in household composition across U.S. counties relate to the Social Vulnerability Index (SVI) utilizing data from the American Community Survey collected in 2020. The features from household counts (for married and unmarried households) that are used in the model are derived from best-fit polynomial curves, and these features are then used to group counties via k-means clustering. Based on visualizations of specific counties within each cluster, a preditive random forest model is used to predict cluster membership. Overall prediction accuracy is slightly above 50%, determining  demographic and economic variables—such as poverty rates, age distributions, and housing cost burden—as being the most influential in distinguishing between household clusters.
+
+## NON-TECHNICAL IMPROVEMENT
+
+One improvement that this report can make is in justifying its choice of features. The student lists five features as contributing to the model, but doesn't indicate how they arrived at that point. Is there some amount of exploratory data analysis that would highlight how variations in some of those features could indicate their usefulness in modeling? Did they systematically select features using stringent feature selection methods like LASSO or RIDGE? What are the original pool of features from the data that could've been chosen?
+
+## TECHNICAL IMPROVEMENT
+
+For the technical improvement, I added code to the model.R file so that confusion matrices are output so that we can evaluate the performance metrics across the clusters. A major critique of this report occurs in the fact that while the prediction error is better than random guess of 25% given the four clusters, a close to a 50-50 shot could be much improved, but the reporter does not take the time to examine if there are systemic recurrences in the errors the model makes. Are the same households or clusters not getting classified correctly? Or are the rates of correct classification the same for all clusters? Thus, I inserted confusion matrices so that we can further examine where the errors in the model lie. 
+
 
 ## Fake Report
 
