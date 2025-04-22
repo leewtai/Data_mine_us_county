@@ -21,16 +21,7 @@ Four, this is more optional, but a flow diagram dipecting the data pipeline woul
 
 Issue: The random forest classifier yields ~52–54% accuracy, which is not significantly better than random guessing (given 4 clusters = 25% chance).
 
-Suggestion: Apply dimensionality reduction (PCA or t-SNE) prior to clustering to:
-
-- Visualize the feature space and understand whether the clusters are separable.
-
-- Possibly reduce noise and improve clustering performance.
-
-(See cluster.R with actual code modifications).
-
-I implemented PCA before k-means clustering to reduce feature noise and enhance cluster robustness. The PCA-derived clusters showed improved interpretability and better separation in t-SNE visualizations.
-
+I implemented PCA on the scaled feature matrix (excluding non-numeric columns like NAME) and retained the top 5 principal components to reduce noise and enhance cluster separation. I then applied k-means clustering on the PCA scores. The PCA-derived clusters would probably show improved interpretability and clearer separation in t-SNE visualizations. I also added silhouette analysis to validate cluster compactness and separation. Additional evaluation using an elbow plot could further refine the choice of K.
 
 # Clusting the US Counties Household Counts
 
