@@ -1,7 +1,7 @@
 library(randomForest)
 library(glue)
 
-svi <- read.csv('../SVI_2020_US_county.csv')
+svi <- read.csv('/Users/tanvi/Desktop/applied machine learning/SVI_2020_US_county.csv')
 clusters <- read.csv('cluster_out.csv')
 
 head(svi)
@@ -37,12 +37,43 @@ for(i in seq_len(k)){
     is_valid <- folds == ki
     is_train <- !is_test & !is_valid
     for(j in seq_along(hyper_param_sweep)){
-        mod_forest <- randomForest(cluster ~ ., data=mdf[is_train,],
-                                   ntree=hyper_param_sweep[j])
-        y_pred <- predict(mod_forest, newdata=mdf[is_valid,])
-        y_valid <- mdf[is_valid,"cluster"]
-        conf_mat <- table(y_pred, y_valid)
-        param_bag[ki, j] <- sum(diag(conf_mat)) / length(y_pred)
+      mod_forest <- randomForest(cluster ~ ., data=mdf[!is_test,], ntree=best_hp)
+      y_pred <- predict(mod_forest, newdata=mdf[is_test,])
+      y_test <- mdf[is_test,"cluster"]
+      test_names <- mdf[is_test, "NAME"]  # To track misclassified counties
+      
+      #Confusion matrix
+      conf_mat <- table(Predicted = y_pred, Actual = y_test)
+      print(glue("Fold {i}: Confusion Matrix"))
+      print(conf_mat)
+      
+      #Per-class accuracy
+      classes <- levels(y_test)
+      class_acc <- rep(NA, length(classes))
+      names(class_acc) <- classes
+      for (cls in classes) {
+        true_cls_idx <- which(y_test == cls)
+        class_acc[cls] <- mean(y_pred[true_cls_idx] == cls)
+      }
+      print(glue("Fold {i}: Per-Class Accuracy"))
+      print(round(class_acc, 3))
+      
+      # Store confusion matrix and per-class accuracy
+      if (!exists("all_conf_mats")) all_conf_mats <- list()
+      if (!exists("per_class_acc_matrix")) per_class_acc_matrix <- matrix(NA, nrow=k, ncol=length(classes))
+      colnames(per_class_acc_matrix) <- classes
+      all_conf_mats[[i]] <- conf_mat
+      per_class_acc_matrix[i, ] <- class_acc
+      
+      #Track misclassified counties
+      misclassified <- test_names[y_pred != y_test]
+      if (!exists("misclassified_all")) misclassified_all <- list()
+      misclassified_all[[i]] <- misclassified
+      
+      # Save final performance for the fold
+      rf_bag[i, 1] <- best_hp
+      rf_bag[i, 2] <- sum(diag(conf_mat)) / length(y_pred)
+      
     }
   }
   print(glue('Cross validation result {i}'))
@@ -58,6 +89,15 @@ for(i in seq_len(k)){
   rf_bag[i, 2] <- sum(diag(conf_mat)) / length(y_pred)
 }
 
+# Summarize
+print("Average Per-Class Accuracy Across Folds:")
+print(round(colMeans(per_class_acc_matrix, na.rm = TRUE), 3))
+
+# Show counties that were often misclassified
+misclassified_flat <- unlist(misclassified_all)
+misclassified_freq <- sort(table(misclassified_flat), decreasing = TRUE)
+head(misclassified_freq, 10)  # Top 10 frequently misclassified counties
+
 print(rf_bag)
 ntree_freq <- table(rf_bag[, 1])
 print(ntree_freq)
@@ -68,4 +108,3 @@ mod_forest <- randomForest(cluster ~ ., data=mdf,
 png('forest_imp.png')
 varImpPlot(mod_forest, type=2)
 dev.off()
-
