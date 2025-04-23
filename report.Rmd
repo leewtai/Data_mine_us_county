@@ -1,0 +1,46 @@
+---
+title: "Report"
+author: "Jacob Malter (jtm2214)"
+output: github_document
+---
+
+## 1. Summary
+
+This project report analyzes how the Social Vulnerability Index relates to 
+changes in household composition, but in specific the 
+married-vs-unmarried-led households across all U.S. counties. In the 
+project, the report extracts five features per household type (slope, 
+acceleration, curve-fit status, 2022 count, and curve-fit failure flag). 
+After normalizing (and removing an outlier county (LA) which may not be 
+the best way to deal with this), k-means clustering is applied to identify 
+four distinct county groups. After that, a random forest was trained on 
+2020 SVI metrics to predict cluster membership, finding a barely better 
+than random predictive power (~52–54% accuracy).
+
+## 2. Major Non-Technical Improvement
+
+Enhance figure caption:
+- There are many plots which are well lead into but there is not enough 
+caption or explanation of the graphs after the introduction and there are 
+important insights and contextual insights from the graphs that could be 
+important
+Enhance cluster explanation:
+- There is also not enough explanation contextually or in general on the 
+clusters and what there groupings mean in context
+- what areas are in the clusters beyond just the one example graphically?
+
+## 3. Major Technical Improvement
+
+Implemented technical correction was improving the read_csv code and 
+adding set.seed because I could not find curve_feats_counties.csv which I 
+needed to implement to be able to run either of the R files locally. 
+
+If I could have tested it with all of the data, I would have considered 
+fixing the binary no-curve flags as categorical rather than scaling them 
+with continuous features:. This is because it does not make sense for them 
+to be numeric for the k means calculations. Also the binary operators are 
+included in the scale() which means they are distorting Euclidean 
+distances in the k-means. These indicators should be excluded from the 
+numeric standardization step and append them afterward, making sure they 
+are categorical instead of numeric.
+

@@ -1,7 +1,10 @@
 library(randomForest)
 library(glue)
+library(readr) # for the read_csv
 
-svi <- read.csv('../SVI_2020_US_county.csv')
+set.seed(2214) # so it stays reproducible with same output
+
+svi <- read_csv("../SVI_2020_US_county.csv", col_types = cols())
 clusters <- read.csv('cluster_out.csv')
 
 head(svi)
@@ -37,12 +40,12 @@ for(i in seq_len(k)){
     is_valid <- folds == ki
     is_train <- !is_test & !is_valid
     for(j in seq_along(hyper_param_sweep)){
-        mod_forest <- randomForest(cluster ~ ., data=mdf[is_train,],
-                                   ntree=hyper_param_sweep[j])
-        y_pred <- predict(mod_forest, newdata=mdf[is_valid,])
-        y_valid <- mdf[is_valid,"cluster"]
-        conf_mat <- table(y_pred, y_valid)
-        param_bag[ki, j] <- sum(diag(conf_mat)) / length(y_pred)
+      mod_forest <- randomForest(cluster ~ ., data=mdf[is_train,],
+                                 ntree=hyper_param_sweep[j])
+      y_pred <- predict(mod_forest, newdata=mdf[is_valid,])
+      y_valid <- mdf[is_valid,"cluster"]
+      conf_mat <- table(y_pred, y_valid)
+      param_bag[ki, j] <- sum(diag(conf_mat)) / length(y_pred)
     }
   }
   print(glue('Cross validation result {i}'))
@@ -68,4 +71,3 @@ mod_forest <- randomForest(cluster ~ ., data=mdf,
 png('forest_imp.png')
 varImpPlot(mod_forest, type=2)
 dev.off()
-
