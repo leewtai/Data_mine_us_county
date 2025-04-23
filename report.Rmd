@@ -1,0 +1,13 @@
+---
+title: "report.Rmd"
+output: html_document
+---
+
+Summary:
+The report attempts to investigate the relationship between variables in the social vulnerability index and change in households across counties over time. First, based on the time series data for households led by married couples and unmarried singles, they created the following features for each county: slope of household count best fit curve in 2022, acceleration of household count best fit curve in 2022, indicator for if the slope never changed from 2009 to 2023, actual household count in 2022, and whether the best fit curve could not be found because the data is too noisy. The features were created for both household measures. All 10 feature columns were normalized and used to cluster the counties using k-means algorithm. Through cross-validation they got an optimal cluster number of 5, but chose to exclude 1 because it only contained one county - Los Angeles. Thus, they ended up fitting just 4 clusters. Finally, validation for the clustering was conducted by predicting the clusters using different social vulnerability index variables using a Random Forest model. They report that the model did better than random guessing. 
+
+Suggested Technical Change:
+I think there's a huge problem with the overall feature normalization strategy of this report. It seems that they just centered and scaled all the feature columns such that they have mean 0 and standard deviation 1. Broadly, this uniform normalization doesn't make sense given that 2 of the features are binary variables. Further, the distribution of raw household count in 2022 is likely skewed, and thus, should be log transformed. Finally, centering and scaling the slope and acceleration features using the existing method allows outliers to have a disproportionate effect on cluster formation, which may explain why Los Angeles ended up in its own cluster. Instead, I believe centering each column by its median and scaling by its IQR could lead to more meaningful clusters that A) display less within-cluster variability and B) are more interpretable. I've implemented changes to the normalization strategy in cluster.R.
+
+Suggested Non-Technical Change:
+I would change the way sampled counties for each cluster are displayed. Right now, the code in cluster.R shows that the time-series for both household counts were graphed for 5 randomly sampled counties in each cluster. However, in the final report, only 1 of the sampled counties was shown for each cluster. Instead, for each cluster, I would display all 5 randomly selected counties along with the average time-series across all counties for that cluster. I've implemented this change and explained its significance in cluster.R.

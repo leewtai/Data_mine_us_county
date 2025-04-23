@@ -11,6 +11,27 @@ scaled_df <- as.data.frame(scaled_df)
 scaled_df[['NAME']] <- df$X
 head(scaled_df)
 
+#Revised Normalization
+scaled_df <- df
+#1 - Log transform raw household count variables 
+scaled_df <- scaled_df %>%
+  mutate(
+    married_log = log1p(B11002_003E_2022), #assuming this is the variable name for raw count
+    unmarried_log = log1p(B11002_012E_2022)
+  )
+#2 - Centering by median and scaling by IQR (compared to mean and standard deviation)
+robust_cols <- c("married.slope_2022", "married.acceleration_2022",
+                 "unmarried.slope_2022", "unmarried.acceleration_2022")
+for (col in robust_cols) {
+  med <- median(scaled_df[[col]], na.rm = TRUE)
+  iqr <- IQR(scaled_df[[col]], na.rm = TRUE)
+  scaled_df[[col]] <- (scaled_df[[col]] - med) /iqr
+}
+#3 - Leaving binary variables un-normalized
+
+#4 - Impute any remaining NAs with 0 
+scaled_df[is.na(scaled_df)] <- 0
+
 scaled_df[['no_curve_married']] <- (is.na(scaled_df[['married.slope_2022']]) - 0.5) * 2
 scaled_df[['no_curve_unmarried']] <- (is.na(scaled_df[['unmarried.slope_2022']]) - 0.5) * 2
 for(i in seq_len(ncol(scaled_df))){
@@ -126,5 +147,81 @@ for(clus in 1:4){
   }
 }
 # large variation in values
+
+#SUGGESTION FOR DISPLAYING TIME-SERIES (y1 and y2) OF RANDOMLY SELECTED COUNTIES 
+#IN EACH CLUSTER 
+#Instead, display all 5 randomly selected counties from each cluster on one graph 
+#along with cluster's average time series for y1 and y2. 
+#This requires the following changes to the code above:
+#1) For each cluster, all county names are pulled (for average ts calculation)
+#2) Plot each cluster's average ts as thick solid lines (different colors for married
+#and unmarried), and overlay 5 sampled counties as dashed lines
+#3) par(mfrow=c(1,4)) such that all four cluster plots can be analyzed side by side
+#WHAT DOES THIS DO?
+#1) Provides user with a better understanding of the within-cluster variation 
+#2) Allows for hypothesis generation regarding what clusters currently mean 
+#as well as different ways of normalizing or engineering features such that 
+#the clusters are more meaningful
+#CODE ->
+#Create different colors for married and unmarried time series
+avg_cols <- c(married = "blue", unmarried = "red")
+sample_cols <- c(married = "skyblue", unmarried = "pink")
+
+#Final produced image for report
+set.seed(123)
+years <- sort(unique(ts$year))
+png("avg_ts_and_sampled_counties.png", width = 1400, height = 500)
+par(mfrow = c(1, 4), mar = c(4, 4, 2, 1))
+
+for(clus in 1:4) {
+  #How many counties are in each cluster
+  members <- scaled_df$NAME[km_out$cluster == clus]
+  n <- length(members)
+  
+  #Matrices for each county's scaled y1 and y2
+  y1_mat <- matrix(NA, nrow = length(years), ncol = n)
+  y2_mat <- matrix(NA, nrow = length(years), ncol = n)
+  
+  #Scaled ts for each county in cluster 
+  for (j in seq_along(members)) {
+    rc <- members[j]
+    tmp <- ts[ts$NAME == rc, c("year", "B11002_003E", "B11002_012E")]
+    y1 <- tmp$B11002_003E 
+    y1 <- (y1 - min(y1)) / (max(y1) - min(y1))
+    y2 <- tmp$B11002_012E
+    y2 <- (y2 - min(y2)) / (max(y2) - min(y2))
+    y1_mat[, j] <- y1
+    y2_mat[, j] <- y2
+  }
+  
+  #Average scaled ts for each cluster 
+  avg_y1 <- rowMeans(y1_mat, na.rm = TRUE)
+  avg_y2 <- rowMeans(y2_mat, na.rm = TRUE)
+  
+  #Sampling 5 counties - slightly changing sampling strat from original code because
+  #good to have index of sampled counties for plotting
+  samp_idx <- sample(seq_len(n), 5)
+  sampled_names <- members[samp_idx]
+  
+  #Plot avg ts, overlay sampled counties, and include legend
+  plot(years, avg_y1, type="l", lwd=2, col=avg_cols["married"],
+       ylim=c(0,1), xlab="Year", ylab="Scaled count",
+       main=glue("Cluster {clus}"))
+  lines(years, avg_y2,      lwd=2, col=avg_cols["unmarried"])
+  for (k in samp_idx) {
+    lines(years, y1_mat[,k], lty=2, col=sample_cols["married"])
+    lines(years, y2_mat[,k], lty=2, col=sample_cols["unmarried"])
+  }
+    legend("topright",
+         legend=c("Avg married","Avg unmarried",
+                  "Sample married","Sample unmarried"),
+         col  = c(avg_cols, sample_cols),
+         lty  = c(1,1,2,2),
+         lwd  = c(2,2,1,1),
+         bty="n")
+}
+dev.off()
+
+
 
 
