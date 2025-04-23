@@ -1,3 +1,30 @@
+# Cali's Response. 
+
+# Question 0. Summary
+This project attempts to analyze shifts in household composition—specifically households led by married versus unmarried individuals—across U.S. counties from 2009 to 2022. It derives trend features (e.g., slope, acceleration, stability) from polynomial fits of household count time series, but the modeling approach is somewhat brittle due to inconsistent curve fits across counties. These engineered features are then clustered using k-means, though the clusters sometimes capture noise or outlier effects (e.g., Los Angeles forming its own cluster). A random forest classifier is trained on 2020 Social Vulnerability Index (SVI) metrics to predict cluster membership, but the model achieves low accuracy (~52–54%), suggesting that either the features or clusters lack clear separation. While the project shows initiative in combining demographic data with unsupervised learning, the execution reveals limitations in both modeling robustness and interpretability.
+
+
+# Suggestions 
+
+## Non-Technical 
+
+I think that both the report and the README files would benefit from an improvement in the overall visual appeal and structure of the report. 
+
+One, I would recommend adding in section headers so that reader's can clearly identify sections that they want to read. Some ideas would be, for example, *Data Sources*, *Feature Engineering*, *Clustering Results*, etc.
+
+Two, I would improve the physical data visuals. Right now, they are hard to understand, and no one who is not familiar with the project and the code would understand their objective. As such, I would include labels for the axes, use color-blind friendly palettes, add legends, highlight specific points or important points, etc. 
+
+Three, the word choices in this report leave a lot to be desired. Many of the statements are vague and ambiguous. As such, I would recommend going back in and adding specific, concrete measurements and descriptions of what they are trying to say / interpret from the graphs.
+
+Four, this is more optional, but a flow diagram dipecting the data pipeline would be a fun addition to enchance the overall readability of the report for those who may not come from data science backgrounds.
+
+## Technical
+
+Issue: The random forest classifier yields ~52–54% accuracy, which is not significantly better than random guessing (given 4 clusters = 25% chance).
+
+I would implement PCA on the scaled feature matrix (excluding non-numeric columns like NAME) to reduce dimensionality and filter out noise. Specifically, I’d retain the top 5 principal components, which should capture the majority of the meaningful variance. Then, I’d apply k-means clustering on the resulting PCA scores to improve cluster robustness and interpretability. I’d expect the PCA-derived clusters to show better separation when visualized using t-SNE. To assess cluster quality, I’d also run silhouette analysis, and for further validation, I’d recommend using an elbow plot to evaluate whether 4 clusters is an appropriate choice for K.
+
+
 # Clusting the US Counties Household Counts
 
 This is homework 5 for Applied Machine Learning (Spring 2025) at Columbia University.
