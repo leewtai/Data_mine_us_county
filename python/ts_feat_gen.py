@@ -16,36 +16,58 @@ def fit_best_polynomial(X, Y, k=1):
     """
     Fits a polynomial regression model of degree k to the input data.
 
-    This function takes input features X and target values Y, and fits a polynomial
-    regression model of degree k. It returns the intercept, coefficients, and R-squared
-    value of the fitted model.
+    This function performs polynomial regression by transforming the input features
+    to include higher-order terms up to the specified degree k. It then fits a
+    linear regression model to these transformed features.
 
     Parameters:
-    X (array-like): Input features. Can be a 1D or 2D array.
-    Y (array-like): Target values.
-    k (int, optional): Degree of the polynomial. Defaults to 1 (linear regression).
+    X (array-like): The input feature(s). Should be a 1D or 2D array.
+    Y (array-like): The target values. Should have the same number of samples as X.
+    k (int, optional): The degree of the polynomial. Defaults to 1 (linear regression).
 
     Returns:
-    numpy.ndarray: A 1D array containing the intercept, coefficients, and R-squared value
-                   of the fitted model, in that order.
+    numpy.ndarray: A 1D array containing the following elements:
+        - The intercept of the fitted model
+        - The coefficients of the polynomial terms (in ascending order of degree)
+        - The R-squared score of the fitted model
+
+    Raises:
+    ValueError: If X has more than one column (multivariate input is not supported).
     """
-    X = np.atleast_2d(X)
+    X = np.atleast_2d(X) #Troubleshoot if input is 1D array
     if X.shape[0] == 1:
         X = X.T  
     X_powers = X.copy()
     for i in range(2, k+1):
-        X_powers = np.concatenate([X_powers, np.power(X, i)], axis=1)
-    assert X_powers.shape[1] == k
+        X_powers = np.concatenate([X_powers, np.power(X, i)], axis=1) #Creates array with higher-order terms
+    if X.shape[1] != 1:
+        raise ValueError("fit_best_polynomial only supports one input feature (univariate regression).")
     mod = LinearRegression().fit(X_powers, Y)
-    intercept = np.array([mod.intercept_])  
-    coefficients = mod.coef_              
-    r_squared = np.array([mod.score(X_powers, Y)])  
+    intercept = np.ravel(mod.intercept_)      # Convert to 1D array
+    coefficients = np.ravel(mod.coef_)        # Convert to 1D array
+    r_squared = np.array([mod.score(X_powers, Y)])
     return np.concatenate([intercept, coefficients, r_squared])
 
 
 def get_best_curve(sdf, census_var='B11002_003E'):
-    X = sdf.year.to_numpy().reshape(-1, 1)
-    Y = sdf[census_var].to_numpy().reshape(-1, 1)
+    """
+    Calculates polynomial regression statistics for a given census variable.
+
+    This function fits polynomial regression models of degrees 1, 2, and 3
+    to the data and returns the combined statistics for all models.
+
+    Parameters:
+    sdf (pandas.DataFrame): A DataFrame containing 'year' and census variable columns.
+    census_var (str, optional): The name of the census variable column to use.
+                                Defaults to 'B11002_003E'.
+
+    Returns:
+    numpy.ndarray: A 1D array containing concatenated statistics for polynomial
+                   regressions of degrees 1, 2, and 3. Each set of statistics includes
+                   intercept, coefficients, and R-squared score for the respective model.
+    """
+    X = sdf.year.to_numpy() #Slightly changed to prevent numpy shape error
+    Y = sdf[census_var].to_numpy()
     poly_stats = []
     for p in range(1, 4):
         poly_stats.append(fit_best_polynomial(X, Y, p))
@@ -60,12 +82,28 @@ def get_best_curve(sdf, census_var='B11002_003E'):
 # if no best line fit exists, separate it out
 
 def calc_slope(coefs, x):
-    # assumes getting a linear model
-    slope = 0 * x
-    for j, coef in enumerate(coefs):
-        # first term will always be 0
-        comp = j * coef * np.power(x, float(j - 1))
-        slope = slope + comp
+    """
+    Calculate the slope of a polynomial function at given x values.
+
+    This function computes the slope (first derivative) of a polynomial function
+    defined by the given coefficients at the specified x values.
+
+    Parameters:
+    coefs (list or array-like): Coefficients of the polynomial in ascending order of degree.
+                                The first element (index 0) is assumed to be the constant term.
+    x (array-like): The x values at which to calculate the slope.
+
+    Returns:
+    numpy.ndarray: An array of slope values corresponding to each input x value.
+
+    Note:
+    This function prints intermediate slope calculations for each term of the polynomial.
+    """
+    x = np.asarray(x, dtype=float) #Troubleshoots type errors.
+    slope = np.zeros_like(x, dtype=float)
+    for j in range(1, len(coefs)): 
+        slope += j * coefs[j] * np.power(x, j - 1) #Changed to exclude constant term 
+        
     return slope
 
 
