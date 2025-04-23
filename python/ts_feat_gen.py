@@ -26,11 +26,19 @@ def fit_best_polynomial(X, Y, k=1):
 def get_best_curve(sdf, census_var='B11002_003E'):
     X = sdf.year.to_numpy().reshape(-1, 1)
     Y = sdf[census_var].to_numpy().reshape(-1, 1)
-    poly_stats = []
+    
+    #keep track of highest r^2 value 
+    highest_r2 = -np.inf
+    highest_r2_stat = None
+
     for p in range(1, 4):
-        poly_stats.append(fit_best_polynomial(X, Y, p))
-    poly_stat_all = np.concatenate(poly_stats)
-    return poly_stat_all
+        temp_stat = fit_best_polynomial(X, Y, p)
+        if temp_stat[-1] > highest_r2:
+            highest_r2 = temp_stat[-1]
+            highest_r2_stat = temp_stat
+
+    return highest_r2_stat
+#original implementation did not keep track of highest r^2 and just returned all stats
 
 
 # Use smallest polynomial that passes 0.6 R^2 value
