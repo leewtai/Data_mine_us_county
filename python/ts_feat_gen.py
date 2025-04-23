@@ -13,14 +13,34 @@ df = pd.read_csv(
              'B11002_003E', 'B11002_012E', 'year'])
 
 def fit_best_polynomial(X, Y, k=1):
+    """
+    Fits a polynomial regression model of degree k to the input data.
+
+    This function takes input features X and target values Y, and fits a polynomial
+    regression model of degree k. It returns the intercept, coefficients, and R-squared
+    value of the fitted model.
+
+    Parameters:
+    X (array-like): Input features. Can be a 1D or 2D array.
+    Y (array-like): Target values.
+    k (int, optional): Degree of the polynomial. Defaults to 1 (linear regression).
+
+    Returns:
+    numpy.ndarray: A 1D array containing the intercept, coefficients, and R-squared value
+                   of the fitted model, in that order.
+    """
+    X = np.atleast_2d(X)
+    if X.shape[0] == 1:
+        X = X.T  
     X_powers = X.copy()
     for i in range(2, k+1):
         X_powers = np.concatenate([X_powers, np.power(X, i)], axis=1)
     assert X_powers.shape[1] == k
     mod = LinearRegression().fit(X_powers, Y)
-    return np.concatenate([mod.intercept_,
-                           mod.coef_[0],
-                           np.array([mod.score(X_powers, Y)])]) # R^2
+    intercept = np.array([mod.intercept_])  
+    coefficients = mod.coef_              
+    r_squared = np.array([mod.score(X_powers, Y)])  
+    return np.concatenate([intercept, coefficients, r_squared])
 
 
 def get_best_curve(sdf, census_var='B11002_003E'):
