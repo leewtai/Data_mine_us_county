@@ -23,6 +23,7 @@ def fit_best_polynomial(X, Y, k=1):
                            np.array([mod.score(X_powers, Y)])]) # R^2
 
 
+
 def get_best_curve(sdf, census_var='B11002_003E'):
     X = sdf.year.to_numpy().reshape(-1, 1)
     Y = sdf[census_var].to_numpy().reshape(-1, 1)
