@@ -1,0 +1,8 @@
+PROJECT SUMMARY
+This project is analyzing how the type of household relates to socioeconomic factors from the Social Vulnerability Index (SVI) in US Counties. It derives features like trends and accelerations in household counts, clusters counties based on these patterns, and attempts to predict the clusters using SVI variables. The goal is to identify which socioeconomic factors correlate with changes in household structures.
+
+NON-TECHNICAL IMPROVEMENT
+One NT improvement the author of this project should've addressed is the clarity of the visualizations. A majority of the graphs lack essential context, making them impossible to interpret. For instance, Cluster 4’s trend graph uses the generic axis labels "y1" and "sdf$year" while the feature importance chart lacks clear titles or explanations and uses terms like “E_TOTPOP” and "MP_DISABL" without any context. 
+
+TECHNICAL IMPROVEMENTS
+On line 18 of cluster.R, the author has replaced NA values with 0 without any justification. This distorts the clustering, especially for counties where no best-fit curve was found.
