@@ -10,7 +10,9 @@ import seaborn as sns
 df = pd.read_csv(
     'with_geo_household_cnt.csv',
     usecols=['NAME', 'state', 'county', 'INTPTLAT', 'INTPTLON',
-             'B11002_003E', 'B11002_012E', 'year'])
+             'B11002_003E', 'B11002_012E', 'year'],
+    encoding='latin-1'
+    )
 
 def fit_best_polynomial(X, Y, k=1):
     X_powers = X.copy()
