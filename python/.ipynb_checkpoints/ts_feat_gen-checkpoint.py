@@ -13,10 +13,9 @@ df = pd.read_csv(
              'B11002_003E', 'B11002_012E', 'year'])
 
 def fit_best_polynomial(X, Y, k=1):
-    X_centered = X - X.mean() # center the year, means our intercept will align with the mean year and our polynomial will not blow up.
-    X_powers = X_centered.copy()
+    X_powers = X.copy()
     for i in range(2, k+1):
-        X_powers = np.concatenate([X_powers, np.power(X_centered, i)], axis=1)
+        X_powers = np.concatenate([X_powers, np.power(X, i)], axis=1)
     assert X_powers.shape[1] == k
     mod = LinearRegression().fit(X_powers, Y)
     return np.concatenate([mod.intercept_,
