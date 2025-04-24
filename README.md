@@ -79,7 +79,7 @@ Given our model is predictive, looking at the features that were important could
 
 The first 2 makes sense given we were dealing with household counts. Having people below 18 would likely point to married households.
 
-<image src='R/forest_imp.png'>
+<image src='R/forest_imp_1_2.png'>
 
 Our results over the different cross validation folds are quite robust.
 
