@@ -1,7 +1,7 @@
 library(randomForest)
 library(glue)
 
-svi <- read.csv('../SVI_2020_US_county.csv')
+svi <- read.csv('/Users/cyra/Documents/Github/Data_mine_us_county/R/SVI_2020_US_county.csv')
 clusters <- read.csv('cluster_out.csv')
 
 head(svi)
@@ -19,10 +19,7 @@ mdf[is.na(mdf$cluster), c("NAME")]
 svi$LOCATION[grepl('Fairfield', svi$LOCATION)]
 clusters$NAME[grepl('Fairfield', clusters$NAME)]
 mdf$cluster <- as.factor(mdf$cluster)
-mdf[['FAKE1']] <- sample(mdf$E_HH)
-mdf[['FAKE4']] <- sample(mdf$E_HBURD)
-mdf[['FAKE2']] <- sample(mdf$E_AGE65)
-mdf[['FAKE3']] <- sample(mdf$E_AGE17)
+# I deleted the fake variables b/c they deplete feature importance. 
 
 
 k <- 6

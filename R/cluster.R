@@ -2,9 +2,9 @@ library(glue)
 library(Rtsne)
 library(RColorBrewer)
 
-df <- read.csv("../python/curve_feats_counties.csv")
+df <- read.csv("/Users/cyra/Documents/Github/Data_mine_us_county/python/curve_feats_counties.csv")
 df <- df[, -which(grepl('2023', names(df)))]
-ts <- read.csv("../python/with_geo_household_cnt.csv")
+ts <- read.csv("/Users/cyra/Documents/Github/Data_mine_us_county/python/with_geo_household_cnt.csv")
 
 scaled_df <- apply(df[, -1], 2, scale, center=TRUE, scale=TRUE)
 scaled_df <- as.data.frame(scaled_df)
@@ -37,10 +37,20 @@ for(i in seq_along(scenarios)){
 dev.off()
 
 scaled_df <- scaled_df[scaled_df$NAME != 'Los Angeles County, California', ]
+variances <- apply(scaled_df[, -which(names(scaled_df) == 'NAME')], 2, var)
+keep <- variances > quantile(variances, 0.75)
+# Add back the NAME column for reference
+scaled_subset <- cbind(scaled_df$NAME, scaled_df[, keep])
+colnames(scaled_subset)[1] <- "NAME"
+scaled_subset <- as.data.frame(scaled_subset)
+set.seed(123)  # For reproducibility
+sample_size <- floor(0.1 * nrow(scaled_df))
+sampled_indices <- sample(seq_len(nrow(scaled_df)), size = sample_size)
+scaled_subset <- scaled_df[sampled_indices, ]
 ks <- 2:20
 km_bag <- matrix(NA, ncol=3, nrow=length(ks))
 for(k in ks){
-  km_out <- kmeans(scaled_df[, -which(names(scaled_df) == 'NAME')], centers=k, nstart=20)
+  km_out <- kmeans(scaled_subset[, -which(names(scaled_subset) == 'NAME')], centers=k, nstart=10) #running on a subset of the data instead of whole thing for speed and reporducibility. 
   km_bag[k - 1, ] <- c(k, km_out$tot.withinss, km_out$betweenss)
 }
 
@@ -81,16 +91,25 @@ dev.off()
 
 cols <- brewer.pal(4, 'Set1')
 for(p in seq(5, 35, by=10)){
-tsne_results <- Rtsne(scaled_df,
-                      dims = 2, perplexity = p, verbose = TRUE, max_iter = 2500)
+  tsne_results <- Rtsne(
+    scaled_df,
+    dims = 2,
+    perplexity = p,
+    pca = TRUE,               # Enable PCA preprocessing
+    partial_pca = TRUE,       # Use faster randomized PCA
+    pca_center = FALSE,       # Disable centering (already scaled)
+    verbose = TRUE,
+    max_iter = 1000
+  )
 png(glue('perplex_{p}_tsne_iter2500.png'))
 plot(tsne_results$Y[, 1], tsne_results$Y[, 2], main=glue("Perplexity {p}"),
      col=cols[km_out$cluster])
 dev.off()
 }
 
-scaled_df[['cluster']] <- km_out$cluster
-write.csv(scaled_df, 'cluster_out.csv')
+#scaled_df[['cluster']] <- km_out$cluster #no clue why this wasnt doing the same thing? 
+scaled_df$cluster <- km_out$cluster
+write.csv(scaled_df, 'cluster_out.csv', row.names = FALSE)
 
 
 target_vars <- list(c('married.slope_2022', 'B11002_003E'),

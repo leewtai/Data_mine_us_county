@@ -1,0 +1,21 @@
+---
+title: "Report"
+author: "Cyra Paladini"
+date: "`r Sys.Date()`"
+output: html_document
+---
+Summary: 
+This project analyzes relationships between the social vulnerability index (SVI) and household composition changes across U.S. counties- marriage. It extracts features from household count data for married couples and unmarried singles, normalizes these features, and applies k mean clustering to identify clusters of counties with similar patterns. the project removes Los Angeles County as an outlier, and then the analysis identifies four distinct clusters. A random forest classifier is then used to predict cluster membership based on SVI variables, andf the feature importance analysis highlights factors like poverty rates, age demographics, and housing costs as key predictors of household structure changes. I.e. these features are correlated with increased SVI score. 
+
+Non-technical concerns: 
+The original report is well execurted and thorough but it lacks clear interpretations of the clustering results in the visualizations. Graphs are present for each cluster, but there is no meaningful explanation of what characterizes each cluster or what patterns they represent that distinguish themselves from one another. There is good interpretation of the curves for counties shown in the report though. The visualizations could be improved by escriptive titles that highlight the key finding of each cluster visualization and axis labels with easily understandable time periods. It would also be really cool and informative to see geographic visualization showing how these clusters are distributed across the country, but this is advanced and outside the scope of the project in my opinion. 
+
+Technocal: 
+The original implementation has several technical limitations, which I changed to improve the speed and efficiency of the clustering and rf model. 
+1. inefficient feature selection- The original code uses all available features without assessing which contribute most to meaningful clustering. this takes FOREVER and isn't necessary 
+2. Computational inefficiency- the k mean is run on the full dataset, which is unnecessary and computationally taxing.
+3. Artificial distortion of results- The inclusion of fake variables in the model.R file negatively impacts feature importance evaluation. Including fake variables is sometimes used in research as a diagnostic, but they should not be present in tje student's final model or feature importance analysis because their presence can distort results and obscure the true drivers of the model performance. 
+4. Suboptimal dimensionality reduction- The tSNE implementation lacks preprocessing that would improve visualization quality. 
+
+My implemented technical improvements address these issues by:
+Adding variance-based feature selection to focus on features with meaningful variation (sorting out low variance features to improve selection and better clustering), implementing sampling to improve computational efficiency, removing artificial variables that were distorting feature importance results, enhancing tSNE visualization with PCA processing. 
