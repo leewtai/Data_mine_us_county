@@ -25,47 +25,72 @@ mdf[['FAKE2']] <- sample(mdf$E_AGE65)
 mdf[['FAKE3']] <- sample(mdf$E_AGE17)
 
 
-k <- 6
-folds <- sample(rep(1:k, times=ceiling(nrow(mdf) / k)))
-folds <- folds[1:nrow(mdf)]
-hyper_param_sweep <- c(500, 1000, 2000, 5000)
-rf_bag <- matrix(NA, ncol=2, nrow=k)
-for(i in seq_len(k)){
-  is_test <- folds == i
-  param_bag <- matrix(NA, ncol=length(hyper_param_sweep), nrow=k)
-  for(ki in setdiff(1:k, i)){
-    is_valid <- folds == ki
-    is_train <- !is_test & !is_valid
-    for(j in seq_along(hyper_param_sweep)){
-        mod_forest <- randomForest(cluster ~ ., data=mdf[is_train,],
-                                   ntree=hyper_param_sweep[j])
-        y_pred <- predict(mod_forest, newdata=mdf[is_valid,])
-        y_valid <- mdf[is_valid,"cluster"]
-        conf_mat <- table(y_pred, y_valid)
-        param_bag[ki, j] <- sum(diag(conf_mat)) / length(y_pred)
-    }
-  }
-  print(glue('Cross validation result {i}'))
-  print(param_bag)
-  best_hp <- hyper_param_sweep[which.max(apply(param_bag, 2, mean, na.rm=TRUE))]
-  print(paste('Best ntree is ', best_hp))
-  mod_forest <- randomForest(cluster ~ ., data=mdf[!is_test,],
-                             ntree=best_hp)
-  y_pred <- predict(mod_forest, newdata=mdf[is_test,])
-  y_test <- mdf[is_test,"cluster"]
-  conf_mat <- table(y_pred, y_test)
-  rf_bag[i, 1] <- best_hp
-  rf_bag[i, 2] <- sum(diag(conf_mat)) / length(y_pred)
+
+##The original implementation of CV and hyperparameter tunning is inefficient.
+## This approach uses a more efficient implementation of cross-validation and parameter tuning.
+library(caret)
+library(ranger)
+library(dplyr)
+levels(mdf$cluster) <- make.names(levels(mdf$cluster))
+# List of num.tree values to try
+tree_values <- c(500, 1000, 2000, 5000)
+
+# Create CV control
+set.seed(1)
+fitControl <- trainControl(
+  method = "cv",
+  number = 6,
+  classProbs = TRUE,
+  summaryFunction = multiClassSummary,
+  savePredictions = "final"
+)
+
+# Store results
+model_results <- data.frame()
+all_models <- list()
+
+for (ntree in tree_values) {
+  cat("Training model with num.tree =", ntree, "\n")
+  
+  model <- train(
+    cluster ~ ., 
+    data = mdf,
+    method = "ranger",
+    trControl = fitControl,
+    tuneLength = 1,             
+    num.tree = ntree,
+    metric = "Accuracy",
+    verbose = FALSE
+  )
+  
+  all_models[[as.character(ntree)]] <- model
+  
+  result_row <- model$results %>%
+    mutate(num.tree = ntree)
+  
+  model_results <- bind_rows(model_results, result_row)
 }
 
-print(rf_bag)
-ntree_freq <- table(rf_bag[, 1])
-print(ntree_freq)
-best_hp <- names(ntree_freq)[which.max(ntree_freq)]
-mod_forest <- randomForest(cluster ~ ., data=mdf,
-                           ntree=best_hp, importance=TRUE)
+print(model_results)
 
-png('forest_imp.png')
-varImpPlot(mod_forest, type=2)
+# Identify best num.tree
+best_model <- model_results %>%
+  arrange(desc(Accuracy)) %>%
+  slice(1)
+
+best_num_tree <- best_model$num.tree
+print(paste("Best num.tree is", best_num_tree))
+
+# Train final randomForest model using best num.tree
+library(randomForest)
+mod_forest <- randomForest(
+  cluster ~ ., 
+  data = mdf,
+  ntree = best_num_tree,
+  importance = TRUE
+)
+
+# Plot and save variable importance
+png("forest_imp.png")
+varImpPlot(mod_forest, type = 2)
 dev.off()
-
