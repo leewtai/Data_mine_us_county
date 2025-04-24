@@ -1,7 +1,9 @@
 library(randomForest)
 library(glue)
 
-svi <- read.csv('../SVI_2020_US_county.csv')
+set.seed(123)
+
+svi <- read.csv('/Users/michelleaude/Downloads/SVI_2020_US_county.csv')
 clusters <- read.csv('cluster_out.csv')
 
 head(svi)
@@ -19,15 +21,20 @@ mdf[is.na(mdf$cluster), c("NAME")]
 svi$LOCATION[grepl('Fairfield', svi$LOCATION)]
 clusters$NAME[grepl('Fairfield', clusters$NAME)]
 mdf$cluster <- as.factor(mdf$cluster)
-mdf[['FAKE1']] <- sample(mdf$E_HH)
-mdf[['FAKE4']] <- sample(mdf$E_HBURD)
-mdf[['FAKE2']] <- sample(mdf$E_AGE65)
-mdf[['FAKE3']] <- sample(mdf$E_AGE17)
 
 
 k <- 6
-folds <- sample(rep(1:k, times=ceiling(nrow(mdf) / k)))
-folds <- folds[1:nrow(mdf)]
+# Create stratified folds based on cluster membership
+cluster_levels <- levels(mdf$cluster)
+folds <- numeric(nrow(mdf))
+
+for (i in cluster_levels) {
+  # Get indices for current cluster
+  idx <- which(mdf$cluster == i)
+  # Assign fold numbers in a balanced way for this cluster
+  folds[idx] <- sample(rep(1:k, length.out=length(idx)))
+}
+
 hyper_param_sweep <- c(500, 1000, 2000, 5000)
 rf_bag <- matrix(NA, ncol=2, nrow=k)
 for(i in seq_len(k)){
