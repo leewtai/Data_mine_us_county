@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+from sklearn.preprocessing import PolynomialFeatures
 
 # You can also obtain this via CourseWorks
 df = pd.read_csv(
@@ -12,18 +13,16 @@ df = pd.read_csv(
     usecols=['NAME', 'state', 'county', 'INTPTLAT', 'INTPTLON',
              'B11002_003E', 'B11002_012E', 'year'])
 
-def fit_best_polynomial(X, Y, k=1):
+##changing k to a placeholder as well as using a python package specific for polynomial features to reduce possibility for errors; also instead of using mod.coef_[0], using coef.flatten reduces possibility for errors
+def fit_best_polynomial(X, Y, k):
     X_powers = X.copy()
-    for i in range(2, k+1):
-        X_powers = np.concatenate([X_powers, np.power(X, i)], axis=1)
-    assert X_powers.shape[1] == k
-    mod = LinearRegression().fit(X_powers, Y)
-    return np.concatenate([mod.intercept_,
-                           mod.coef_[0],
-                           np.array([mod.score(X_powers, Y)])]) # R^2
+    poly = PolynomialFeatures(degree=k)
+    X_poly = poly.fit_transform(X_powers)
+    mod = LinearRegression().fit(X_poly, Y)
+    return np.concatenate([mod.intercept_, mod.coef_.flatten(), np.array([mod.score(X_poly, Y)])])
 
-
-def get_best_curve(sdf, census_var='B11002_003E'):
+##changed census_var into a placeholder variable because in its application it is used as such and not confined to B11002_003E
+def get_best_curve(sdf, census_var):
     X = sdf.year.to_numpy().reshape(-1, 1)
     Y = sdf[census_var].to_numpy().reshape(-1, 1)
     poly_stats = []
@@ -41,13 +40,12 @@ def get_best_curve(sdf, census_var='B11002_003E'):
 
 def calc_slope(coefs, x):
     # assumes getting a linear model
-    slope = 0 * x
+    slope = np.zeros_like(x, dtype=float) ##similar meaning but just in case it is not dealt with properly
     for j, coef in enumerate(coefs):
         # first term will always be 0
         comp = j * coef * np.power(x, float(j - 1))
         slope = slope + comp
     return slope
-
 
 def get_feats(row, r2_cutoff=0.6):
     r2_inds = [2, 6, 11]
@@ -71,6 +69,7 @@ def get_feats(row, r2_cutoff=0.6):
 
 df_grp = df.groupby(['NAME', 'state', 'county'])
 
+
 ts_fits = []
 names = []
 census_vars = ['B11002_003E', 'B11002_012E']
@@ -78,7 +77,7 @@ census_vars = ['B11002_003E', 'B11002_012E']
 for grp, ind in df_grp.groups.items():
     names.append(grp[0])
     sdf = df.loc[ind, ].copy()
-    is_22 = sdf.year == 2022
+    sdf = sdf.sort_values(by = "year")##be more careful about the arrangement of columns, in case that the years are not chronologically ordered
     best_curves = [np.concatenate([get_best_curve(sdf, cv),
                                    sdf.loc[is_22, cv].to_numpy()]) for cv in census_vars]
     curve_feats = [np.concatenate([get_feats(bc), bc[-1:]]) for bc in best_curves]

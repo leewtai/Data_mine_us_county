@@ -12,9 +12,10 @@ key = os.environ.get('CENSUS_KEY')
 
 URL = 'https://api.census.gov/data/{year}/acs/acs5'
 payload = {
-        'get': 'group(B11002)',
+        'get': 'group(B11002), GEO_ID',
         'for': 'county:*',
         'key': key}
+##added Geo_ID which is needed for future merging
 
 yr_range = range(2009, 2024)
 
