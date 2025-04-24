@@ -26,6 +26,7 @@ def fit_best_polynomial(X, Y, k=1):
 def get_best_curve(sdf, census_var='B11002_003E'):
     X = sdf.year.to_numpy().reshape(-1, 1)
     Y = sdf[census_var].to_numpy().reshape(-1, 1)
+    Y = Y/Y[0]
     poly_stats = []
     for p in range(1, 4):
         poly_stats.append(fit_best_polynomial(X, Y, p))
