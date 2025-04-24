@@ -1,0 +1,86 @@
+---
+title: "Homework 5 -ML"
+author: "Lillian Bradley"
+date: "2025-04-24"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# What the Project is Doing
+This project is attempting to examine the relationship between SVI and household counts by analyzing county-level data on households led by married and unmarried individuals. They extract features from household trends to normalize and compare the data across counties. Using these features, they then perform k means clustering to group counties based on similar features. Afterwards, they use random forest model to predict cluster membership based on SVI Variables. This is somewhat successful as prediction accuracy is 52-54%, but the analysis reveals that household counts, age predictors (number of people under 18, meaning families, and number fo people over 65, elderly), and poverty are the most influential factors. This suggests that household structure and age distribution are key factors influencing household trends in the U.S.—though not necessarily direct drivers of SVI itself.
+
+
+
+# One Major Non-Technical Improvement 
+I think having a more clear question or goal would be the easiest and most drastic way to improve this report. There does not seem to be a clear purpose or an intended audience with this report making it all seem a bit shallow and overall confusing. Defining a more clear goal such as stated in the conclusion, "It would be more enlightening to know if the relative SVI to a county's neighboring counties would be telling of its household counts over time" or something like how does the SVI vary across household count in Metropolitan versus suburban counties. As you have stressed in class, having a clear question and audience is the first step and one of the most important steps with any large data project. 
+
+I would also more clearly write out my thought process and the intention behind using different methods and different graphs. The report feels very quick and a bit confusing. 
+
+
+# One Major Techincal Improvement
+
+My initial thought for a technical improvement is to incorporate spatial data to the analysis. Given they are examining data on counties there should be some trends regionally or spatial information worth looking into. It is common for neighboring counties to share similar demographics and social economics. 
+
+I would use DBSCAN Clustering instead of k-means to incorporate spatial data. 
+
+## Implementing the Technical Improvement 
+
+```{r}
+#libraries and bringing the data in 
+
+library(tidyverse)
+library(dbscan)
+library(Rtsne)
+library(RColorBrewer)
+library(dplyr)
+library(ggplot2)
+library(scales)
+
+ts <- read.csv("~/Desktop/Stats/STAT3106/with_geo_household_cnt.csv")
+head(ts, 2)
+```
+
+```{r}
+#filtering to most recent year 
+latest_year <- max(ts$year, na.rm = TRUE)
+
+ts_latest <- ts %>%
+  filter(year == latest_year)
+
+#selecting only estimate columns
+ts_clean <- ts_latest %>%
+  select(matches("_E$"), INTPTLAT, INTPTLON) %>%
+  drop_na()
+
+
+#standardizing 
+scaled_estimates <- scale(select(ts_clean, -INTPTLAT, -INTPTLON))
+
+#combining with geo coordinates 
+geo <- ts_clean[, c("INTPTLAT", "INTPTLON")]
+X <- cbind(scaled_estimates, geo)
+
+#running dbscan clustering
+set.seed(49)
+db <- dbscan(X, eps = 0.5, minPts = 5)
+
+#attaching cluster labels
+ts_result <- ts_latest %>%
+  drop_na(matches("_E$"), INTPTLAT, INTPTLON) %>%
+  mutate(cluster = db$cluster)
+
+#visualization  
+ggplot(ts_result, aes(x = INTPTLON, y = INTPTLAT, color = factor(cluster))) +
+  geom_point(size = 3, alpha = 0.8) +
+  scale_color_brewer(palette = "Dark2", name = "Cluster") +
+  labs(title = "DBSCAN Clustering of Counties",
+       subtitle = paste0("Using Household Estimates + Spatial Data (", latest_year, ")"),
+       x = "Longitude", y = "Latitude") +
+  theme_minimal()
+```
+
+
+I edited the cluster.R file to use DB Scan for clustering instead of K Means. This examined the data while taking location into account. I was only able to find the with_geo_household_cnt data file on courseworks so that was the data file I used. 
