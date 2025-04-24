@@ -1,0 +1,161 @@
+Homework 5: Fake Report Review and Improvements 
+
+# Summary
+
+The given report uses the American Community Survey and the social vulnerability index (SVI) to measure changing 
+social structure (from 2020 to 2022) in various U.S. counties, relying on the counts for households led by married 
+couples and unmarried singles as proxies. To conduct this measurement, the student normalized a list of five features 
+for both household counts (including actual household count in 2022, acceleration in household count, an indicator 
+for slope change, and the presence of a best fit curve found via polynomial regression), and clustered the counties 
+that met their conditions for a best fit curve according to these features. After conducting a 4 cluster k-means, the 
+student modeled a random forest using the SVI to predict cluster cases. Their cross validation reveals a prediction 
+error of 52%, suggesting the poor fit of their random forest model. In spite of the large prediction error, the 
+student concludes based on the consistently recurring features in the model that factors related to poverty, age
+distribution, and cost of living seem to be correlated with the change in households led by married and unmarried
+people, with regional variations. 
+
+# Non-technical improvement/correction recommendations
+                           
+To improve the logical structure of the project, the student should expand a bit on their intended audience and their 
+choice of counts for households led by married couples and unmarried singles as proxies for changing social 
+structure. What motivated that decision? Are there any counties of interest? For what purpose are they measuring 
+changes in American social structure? An introduction section could be helpful here, as well as a discussion section 
+after they provide the results from their random forest model. In all, the report should be more formally structured,
+including but not limited to an introduction, a small methods section, results, and discussion.
+
+As for the readability of the report, the axes of the cluster visualizations must be properly labelled, perhaps with 
+captions. If the report were structured more formally, those visualizations would be labelled figures in the results 
+section. Again, a discussion section could enlighten readers as to what is significant about those regional 
+variations in clustering.     
+
+# Technical improvement/correction recommendation 
+
+Technically, the random forest model can be improved upon in both its tuning and its evaluation. The student only 
+tunes ntree, without any attention to mtry, nodesize, or maxnodes, which can have large effects on overfitting and 
+bias-variance tradeoffs. I have included mtry, nodesize, and maxnodes in my technical intervention to find the 
+optimal hyperparameter combination for the random forest model. As for random forest evaluation, the student only 
+refers to overall accuracy. There is more to glean from metrics like Precision, Recall, and F1 score, where Precision 
+measures the rate at which the model makes correct predictions, Recall measures the rate at which the model correctly 
+classifies actual -1s or 1s, as they are encoded by the student, the F1 score combines the two measures. For this 
+reason, I will use the F1 score to identify which set of hyperparameters works best for this model.  (Another 
+intervention I would try--binary encoding with 1s and 0s). 
+
+##  Technical intervention to model.R
+
+```{r, echo = TRUE}
+
+# load necessary libraries
+library(randomForest)
+library(glue)
+library(caret)
+library(e1071)
+
+svi <- read.csv('../SVI_2020_US_county.csv')
+clusters <- read.csv('cluster_out.csv')
+
+unwanted_vars <- c("ST", "STATE", "ST_ABBR", "STCNTY", "COUNTY", "FIPS")
+unwanted <- names(svi) %in% unwanted_vars
+svi <- svi[, !unwanted]
+
+mdf <- merge(clusters[, c("cluster", "NAME")], svi, by.x='NAME', by.y='LOCATION')
+mdf$cluster <- as.factor(mdf$cluster)
+
+set.seed(123)
+# create stratified outer folds for nested CV
+folds <- createFolds(mdf$cluster, k = 6, list = TRUE)
+
+# update to include hyperparameter grid including ntree, mtry, nodesize, maxnodes
+param_grid <- expand.grid(
+  ntree = c(500, 1000),
+  mtry = c(2, 5, 10),
+  nodesize = c(1, 5),
+  maxnodes = c(10, 30)
+),
+  mtry = c(2, 5, 10),
+  nodesize = c(1, 5),
+  maxnodes = c(10, 30)
+)
+
+results <- data.frame()
+
+for (i in seq_along(folds)) {
+  test_idx <- folds[[i]]
+  test_data <- mdf[test_idx, ]
+  train_valid_idx <- setdiff(seq_len(nrow(mdf)), test_idx)
+  train_valid_data <- mdf[train_valid_idx, ]
+
+  # create inner folds for hyperparameter tuning (nested CV)
+inner_folds <- createFolds(train_valid_data$cluster, k = 5, list = TRUE)
+  perf_grid <- data.frame()
+
+  for (j in 1:nrow(param_grid)) {
+    params <- param_grid[j, ]
+    inner_metrics <- c()
+
+    for (k in seq_along(inner_folds)) {
+      valid_idx <- inner_folds[[k]]
+      train_idx <- setdiff(seq_len(nrow(train_valid_data)), valid_idx)
+
+      model <- randomForest(
+        cluster ~ ., data = train_valid_data[train_idx, ],
+        ntree = params$ntree,
+        mtry = params$mtry,
+        nodesize = params$nodesize,
+        maxnodes = params$maxnodes
+      )
+
+      preds <- predict(model, newdata = train_valid_data[valid_idx, ])
+      actual <- train_valid_data[valid_idx, "cluster"]
+      acc <- sum(preds == actual) / length(actual)
+      inner_metrics <- c(inner_metrics, acc)
+    }
+
+    perf_grid <- rbind(perf_grid, cbind(params, Accuracy = mean(inner_metrics)))
+  }
+
+  best_params <- perf_grid[which.max(perf_grid$Accuracy), ]
+
+  best_model <- randomForest(
+    cluster ~ ., data = train_valid_data,
+    ntree = best_params$ntree,
+    mtry = best_params$mtry,
+    nodesize = best_params$nodesize,
+    maxnodes = best_params$maxnodes
+  )
+
+  preds <- predict(best_model, newdata = test_data)
+  actual <- test_data$cluster
+  
+  # compute additional evaluation metrics including precision, recall, F1-score
+cm <- confusionMatrix(preds, actual)
+
+  results <- rbind(results, cbind(
+    Fold = i,
+    Accuracy = sum(preds == actual) / length(actual),
+    Precision = mean(cm$byClass[, "Precision"], na.rm = TRUE),
+    Recall = mean(cm$byClass[, "Recall"], na.rm = TRUE),
+    F1 = mean(cm$byClass[, "F1"], na.rm = TRUE),
+    best_params
+  ))
+}
+
+results_summary <- aggregate(cbind(Accuracy, Precision, Recall, F1) ~ ntree + mtry + nodesize + maxnodes, data = results, FUN = mean)
+best_result <- results_summary[which.max(results_summary$F1), ]
+print("Best hyperparameter combination based on average F1:") # for readability
+print(best_result)
+
+final_model <- randomForest(
+  cluster ~ ., data = mdf,
+  ntree = best_result$ntree,
+  mtry = best_result$mtry,
+  nodesize = best_result$nodesize,
+  maxnodes = best_result$maxnodes,
+  importance = TRUE
+)
+
+png('forest_imp.png')
+varImpPlot(final_model, type=2)
+dev.off()
+
+
+```
