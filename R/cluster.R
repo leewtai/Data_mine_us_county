@@ -15,7 +15,8 @@ scaled_df[['no_curve_married']] <- (is.na(scaled_df[['married.slope_2022']]) - 0
 scaled_df[['no_curve_unmarried']] <- (is.na(scaled_df[['unmarried.slope_2022']]) - 0.5) * 2
 for(i in seq_len(ncol(scaled_df))){
   is_na_vals <- is.na(scaled_df[, i])
-  scaled_df[is_na_vals, i] <- 0 # replaced with mean, just so kmeans will run!
+  col_mean <- mean(scaled_df[ ,i], na.rm = TRUE)
+  scaled_df[is_na_vals, i] <- col_mean # replaced missing values w/NA instead of 0. 
 }
 
 no_m_yes_u <- (scaled_df[['no_curve_married']] == 1) & (scaled_df[['no_curve_unmarried']] == -1)
