@@ -23,6 +23,7 @@ def fit_best_polynomial(X, Y, k=1):
                            np.array([mod.score(X_powers, Y)])]) # R^2
 
 
+
 def get_best_curve(sdf, census_var='B11002_003E'):
     X = sdf.year.to_numpy().reshape(-1, 1)
     Y = sdf[census_var].to_numpy().reshape(-1, 1)
@@ -75,9 +76,19 @@ ts_fits = []
 names = []
 census_vars = ['B11002_003E', 'B11002_012E']
 # grp, ind = next(iter(df_grp.groups.items()))
+expected_years = set(range(2009, 2024))
+
 for grp, ind in df_grp.groups.items():
+    sdf = df.loc[ind].copy()
+    actual_years = set(sdf['year'].unique())
+
+    missing_years = expected_years - actual_years
+    # even if a county has a missing year in 2022, it would still be passed into get_best_curve(). The student could at least have a code that checks if there are missing years in the county data.
+    if missing_years:
+        print(f"Skipping {grp} — missing years: {sorted(missing_years)}")  # some counties such as 'Petersburg Census Area, Alaska' has only 2009 to 2013 data.
+        continue
+    
     names.append(grp[0])
-    sdf = df.loc[ind, ].copy()
     is_22 = sdf.year == 2022
     best_curves = [np.concatenate([get_best_curve(sdf, cv),
                                    sdf.loc[is_22, cv].to_numpy()]) for cv in census_vars]
