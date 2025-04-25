@@ -1,0 +1,124 @@
+---
+title: "Report"
+author: "Makarios Ewing"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+##  Project summary
+
+This project takes American Community Survey household‐count data for every U.S. county, fits low‐order polynomials to the time series of married‐couple and unmarried‐solo households (2009–2022) to extract slopes, accelerations, and “no‐curve” flags, normalizes those ten features per county, and then uses k-means (after removing Los Angeles as an outlier) to partition counties into four demographic‐trend clusters. It visualizes cluster structure with elbow plots and t-SNE embeddings, shows example county trajectories for each group, and finally trains a random-forest on 2020 Social Vulnerability Index variables to see how well SVI can predict those household‐trend clusters.
+
+
+
+## Non-Technical improvement  
+
+Right now most plots are just dropped into the report with generic file names. For a stronger case on a project, it  is best to give each figure a descriptive caption.
+
+For Example for the first graph in  this project, I would write a caption stating:
+
+Title: “Figure 1. Married vs. Unmarried Household Trends in San Francisco County (2009–2022)”
+
+Caption: “Blue markers show married‐couple households rising sharply until 2019 and then plateauing; red markers show unmarried‐solo households inching up through 2020 before a slight dip. Data are ACS 5-year estimates.”
+
+This will tie the visuals back to our interpretations.
+
+
+
+## Technical Improvement
+
+
+In  the cluster.R  code, i  replaced this chunk of code:
+
+`scaled_df[['no_curve_married']] <- (is.na(scaled_df[['married.slope_2022']]) - 0.5) * 2`
+`scaled_df[['no_curve_unmarried']] <- (is.na(scaled_df[['unmarried.slope_2022']]) - 0.5) * 2`
+`for(i in seq_len(ncol(scaled_df))){`
+ ` is_na_vals <- is.na(scaled_df[, i])`
+ ` scaled_df[is_na_vals, i] <- 0 # replaced with mean, just so kmeans will run!`
+}
+`no_m_yes_u <- (scaled_df[['no_curve_married']] == 1) & (scaled_df[['no_curve_unmarried']] == -1)`
+`yes_m_no_u <- (scaled_df[['no_curve_married']] == -1) & (scaled_df[['no_curve_unmarried']] == 1)`
+`no_m_no_u <- (scaled_df[['no_curve_married']] == 1) & (scaled_df[['no_curve_unmarried']] == 1)`
+
+as the code does not match the comment, replacing  the N/A values with ), which You explicitly warned that “zero‐imputation after scaling collapses all missing patterns to the same ‘0’ value, hiding real signal and distorting distances,” and that “median imputation is more robust to outliers.” Yet the original code did exactly the opposite—imputing 0 after scaling, which collapses all missing patterns to the same “0” value therefore hiding real signal and distorting distances. 
+
+This was the chunk I inserted instead: 
+
+`scaled_df <- scaled_df %>%`
+  mutate(
+   ` no_curve_married   = as.integer(is.na(married.slope_2022)),`
+   ` no_curve_unmarried = as.integer(is.na(unmarried.slope_2022))`
+  )
+
+`num_cols <- setdiff(`
+  names(scaled_df),
+ ` c("NAME", "no_curve_married", "no_curve_unmarried")`
+)
+
+
+`for(col in num_cols) {`
+ ` med <- median(scaled_df[[col]], na.rm = TRUE)`
+  `scaled_df[[col]][is.na(scaled_df[[col]])] <- med`
+}
+
+
+`scaled_df[num_cols] <- lapply(scaled_df[num_cols], scale)`
+
+
+
+
+`no_m_yes_u   <- (scaled_df$no_curve_married == 1) & (scaled_df$no_curve_unmarried == 0)`
+`yes_m_no_u   <- (scaled_df$no_curve_married == 0) & (scaled_df$no_curve_unmarried == 1)`
+`no_m_no_u    <- (scaled_df$no_curve_married == 1) & (scaled_df$no_curve_unmarried == 1)`
+
+
+## Implementing the code
+
+
+```{r}
+library(glue)
+library(Rtsne)
+library(RColorBrewer)
+library(dplyr)
+
+df <- read.csv("C:/Users/newli/Downloads/curve_feats_counties.csv")
+df <- df[, -which(grepl('2023', names(df)))]
+ts <- read.csv("C:/Users/newli/Downloads/with_geo_household_cnt.csv")
+
+scaled_df <- apply(df[, -1], 2, scale, center=TRUE, scale=TRUE)
+scaled_df <- as.data.frame(scaled_df)
+scaled_df[['NAME']] <- df$X
+head(scaled_df)
+
+
+scaled_df <- scaled_df %>%
+  mutate(
+    no_curve_married   = as.integer(is.na(married.slope_2022)),
+    no_curve_unmarried = as.integer(is.na(unmarried.slope_2022))
+  )
+
+num_cols <- setdiff(
+  names(scaled_df),
+  c("NAME", "no_curve_married", "no_curve_unmarried")
+)
+
+
+for(col in num_cols) {
+  med <- median(scaled_df[[col]], na.rm = TRUE)
+  scaled_df[[col]][is.na(scaled_df[[col]])] <- med
+}
+
+
+scaled_df[num_cols] <- lapply(scaled_df[num_cols], scale)
+
+
+
+no_m_yes_u   <- (scaled_df$no_curve_married == 1) & (scaled_df$no_curve_unmarried == 0)
+yes_m_no_u   <- (scaled_df$no_curve_married == 0) & (scaled_df$no_curve_unmarried == 1)
+no_m_no_u    <- (scaled_df$no_curve_married == 1) & (scaled_df$no_curve_unmarried == 1)
+head(scaled_df)
+```
+As we can see, everything runs smoothly, and was corrected

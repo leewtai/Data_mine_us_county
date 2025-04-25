@@ -1,3 +1,4 @@
+
 library(glue)
 library(Rtsne)
 library(RColorBrewer)
@@ -11,28 +12,45 @@ scaled_df <- as.data.frame(scaled_df)
 scaled_df[['NAME']] <- df$X
 head(scaled_df)
 
-scaled_df[['no_curve_married']] <- (is.na(scaled_df[['married.slope_2022']]) - 0.5) * 2
-scaled_df[['no_curve_unmarried']] <- (is.na(scaled_df[['unmarried.slope_2022']]) - 0.5) * 2
-for(i in seq_len(ncol(scaled_df))){
-  is_na_vals <- is.na(scaled_df[, i])
-  scaled_df[is_na_vals, i] <- 0 # replaced with mean, just so kmeans will run!
+# CHANGED: replaced zero-impute after scaling with median-impute before scaling
+scaled_df <- scaled_df %>%
+  mutate(
+    no_curve_married   = as.integer(is.na(married.slope_2022)),
+    no_curve_unmarried = as.integer(is.na(unmarried.slope_2022))
+  )
+
+num_cols <- setdiff(
+  names(scaled_df),
+  c("NAME", "no_curve_married", "no_curve_unmarried")
+)
+
+
+for(col in num_cols) {
+  med <- median(scaled_df[[col]], na.rm = TRUE)
+  scaled_df[[col]][is.na(scaled_df[[col]])] <- med
 }
 
-no_m_yes_u <- (scaled_df[['no_curve_married']] == 1) & (scaled_df[['no_curve_unmarried']] == -1)
-yes_m_no_u <- (scaled_df[['no_curve_married']] == -1) & (scaled_df[['no_curve_unmarried']] == 1)
-no_m_no_u <- (scaled_df[['no_curve_married']] == 1) & (scaled_df[['no_curve_unmarried']] == 1)
+
+scaled_df[num_cols] <- lapply(scaled_df[num_cols], scale)
+
+
+
+no_m_yes_u   <- (scaled_df$no_curve_married == 1) & (scaled_df$no_curve_unmarried == 0)
+yes_m_no_u   <- (scaled_df$no_curve_married == 0) & (scaled_df$no_curve_unmarried == 1)
+no_m_no_u    <- (scaled_df$no_curve_married == 1) & (scaled_df$no_curve_unmarried == 1)
+head(scaled_df)
 scenarios <- list(no_m_yes_u, yes_m_no_u, no_m_no_u)
 png('look_at_bad_fits.png', 1200, 500)
 par(mfrow=c(1, 3))
 for(i in seq_along(scenarios)){
-    s <- scenarios[[i]]
-    rand_county <- sample(scaled_df[s, "NAME"], 1)
-    sdf <- ts[ts$NAME == rand_county, c('year', 'B11002_003E', 'B11002_012E')]
-    y_range <- c(min(sdf[, -1]), max(sdf[, -1]))
-    plot(sdf$year, sdf[, 2], col="blue", pch=16, ylim=y_range)
-    points(sdf$year, sdf[, 3], col="red", pch=16)
-    legend("topleft", legend=c('married', 'unmarried'),
-           fill=c('blue', 'red'))
+  s <- scenarios[[i]]
+  rand_county <- sample(scaled_df[s, "NAME"], 1)
+  sdf <- ts[ts$NAME == rand_county, c('year', 'B11002_003E', 'B11002_012E')]
+  y_range <- c(min(sdf[, -1]), max(sdf[, -1]))
+  plot(sdf$year, sdf[, 2], col="blue", pch=16, ylim=y_range)
+  points(sdf$year, sdf[, 3], col="red", pch=16)
+  legend("topleft", legend=c('married', 'unmarried'),
+         fill=c('blue', 'red'))
 }
 dev.off()
 
@@ -81,12 +99,12 @@ dev.off()
 
 cols <- brewer.pal(4, 'Set1')
 for(p in seq(5, 35, by=10)){
-tsne_results <- Rtsne(scaled_df,
-                      dims = 2, perplexity = p, verbose = TRUE, max_iter = 2500)
-png(glue('perplex_{p}_tsne_iter2500.png'))
-plot(tsne_results$Y[, 1], tsne_results$Y[, 2], main=glue("Perplexity {p}"),
-     col=cols[km_out$cluster])
-dev.off()
+  tsne_results <- Rtsne(scaled_df,
+                        dims = 2, perplexity = p, verbose = TRUE, max_iter = 2500)
+  png(glue('perplex_{p}_tsne_iter2500.png'))
+  plot(tsne_results$Y[, 1], tsne_results$Y[, 2], main=glue("Perplexity {p}"),
+       col=cols[km_out$cluster])
+  dev.off()
 }
 
 scaled_df[['cluster']] <- km_out$cluster
@@ -112,19 +130,17 @@ for(clus in 1:4){
   # get 3 counties
   rand_counties <- sample(scaled_df[km_out$cluster == clus, 'NAME'], 5)
   for(i in seq_along(rand_counties)){
-      rc = rand_counties[i]
-      sdf <- ts[ts$NAME == rc, c('year', 'B11002_003E', 'B11002_012E')]
-      y1 <- sdf[['B11002_003E']]
-      y1 <- (y1 - min(y1)) / (max(y1) - min(y1))
-      y2 <- sdf[['B11002_012E']]
-      y2 <- (y2 - min(y2)) / (max(y2) - min(y2))
-      png(glue('eg_cluster{clus}_{i}_curve.png'))
-      plot(sdf$year, y1, main=glue("Cluster {clus} household count\n {rc}"), col="blue", pch=16, ylim=c(0, 1))
-      points(sdf$year, y2, col="red", pch=16)
-      legend("topleft", fill=c("blue", "red"), legend=c("married", "unmarried"), pch=16, title='household count')
-      dev.off()
+    rc = rand_counties[i]
+    sdf <- ts[ts$NAME == rc, c('year', 'B11002_003E', 'B11002_012E')]
+    y1 <- sdf[['B11002_003E']]
+    y1 <- (y1 - min(y1)) / (max(y1) - min(y1))
+    y2 <- sdf[['B11002_012E']]
+    y2 <- (y2 - min(y2)) / (max(y2) - min(y2))
+    png(glue('eg_cluster{clus}_{i}_curve.png'))
+    plot(sdf$year, y1, main=glue("Cluster {clus} household count\n {rc}"), col="blue", pch=16, ylim=c(0, 1))
+    points(sdf$year, y2, col="red", pch=16)
+    legend("topleft", fill=c("blue", "red"), legend=c("married", "unmarried"), pch=16, title='household count')
+    dev.off()
   }
 }
 # large variation in values
-
-
