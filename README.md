@@ -1,4 +1,4 @@
-# Clusting the US Counties Household Counts
+# Clustering the US Counties Household Counts
 
 This is homework 5 for Applied Machine Learning (Spring 2025) at Columbia University.
 
@@ -19,6 +19,17 @@ This homework requires you to:
   - Please suggest at least one major technical improvement/correction they should do.
 - Please implement your technical recommendation above in your report. The household data is on CourseWorks `Files/census/`.
 
+## Question Answers
+
+### Question 1: What is going on here?
+
+I believe that the goal of this report was to see if social vulnerability indices have explanatory power for changes in the overall composition of households (married vs unmarried family structures). The clustering helps to account for the possibility that the effects differ depending on which cities we are analyzing and seeks patterns in those differences. Unfortunately, the student actually just predicted changes in overall household count, using the indices as predictors, which does not answer the question he appears to be trying to address.
+
+### Question 2: Improvement
+
+One major non-technical improvement that this student could make would be to just state the research question. It is difficult to infer what he is talking about and how relevant each of the (fairly disparate) parts are to the project as a whole. Just writing down the question of interest would solve this easily.
+
+One technical improvement that I will make is to improve the readability of the plot calling in the first chunk. There is a section where four plots are called with the exact same syntax. I will make this into a function and feed eight variables into the function to produce the four plots.
 
 ## Fake Report
 
