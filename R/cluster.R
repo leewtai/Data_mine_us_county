@@ -53,29 +53,28 @@ km_out <- kmeans(scaled_df[, -which(names(scaled_df) == 'NAME')], centers=4, nst
 table(km_out$cluster) 
 scaled_df[km_out$cluster == 3,] # Los Angeles is its own cluster!
 
+# In this section, the plot() function was called four times in order to create four very similar graphs. Here I condense this to a single function.
+
+plotkm <- function(varname, compare) {
+  for (i in 1:length(varname)){
+  plot(km_out$centers[, varname[i]],
+       km_out$centers[, compare[i]],
+       col = cols4, pch = 16)
+  }
+}
+
+# These specify the variables that each distinct plot will call
+
+varnames <- c('married.val_2022', 'unmarried.val_2022', 'married.slope_2022', 'no_curve_married')
+coms <- c('married.slope_2022', 'unmarried.slope_2022', 'unmarried.slope_2022', 'no_curve_unmarried')
+
+# These four commands call the plots
+
 cols4 <- brewer.pal(4, "Set1")
 png('kmeans_4_centers_slope.png')
 par(mfrow=c(2, 2))
-plot(km_out$centers[, 'married.val_2022'],
-     # km_out$centers[, 'unmarried.slope_2022'])
-     km_out$centers[, 'married.slope_2022'],
-     col=cols4, pch=16)
-legend("topleft", legend=1:4, fill=cols4)
-plot(km_out$centers[, 'unmarried.val_2022'],
-     # km_out$centers[, 'unmarried.slope_2022'])
-     km_out$centers[, 'unmarried.slope_2022'],
-     col=cols4, pch=16)
-legend("topleft", legend=1:4, fill=cols4)
-plot(km_out$centers[, 'married.slope_2022'],
-     # km_out$centers[, 'unmarried.slope_2022'])
-     km_out$centers[, 'unmarried.slope_2022'],
-     col=cols4, pch=16)
-legend("topleft", legend=1:4, fill=cols4)
-plot(km_out$centers[, 'no_curve_married'],
-     # km_out$centers[, 'unmarried.slope_2022'])
-     km_out$centers[, 'no_curve_unmarried'],
-     col=cols4, pch=16)
-legend("topleft", legend=1:4, fill=cols4)
+plotkm(varnames, coms)
+
 dev.off()
 
 
