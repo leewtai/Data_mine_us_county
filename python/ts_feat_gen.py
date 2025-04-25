@@ -1,6 +1,8 @@
+
 from itertools import product
 import csv
 from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -13,14 +15,23 @@ df = pd.read_csv(
              'B11002_003E', 'B11002_012E', 'year'])
 
 def fit_best_polynomial(X, Y, k=1):
-    X_powers = X.copy()
-    for i in range(2, k+1):
-        X_powers = np.concatenate([X_powers, np.power(X, i)], axis=1)
-    assert X_powers.shape[1] == k
-    mod = LinearRegression().fit(X_powers, Y)
-    return np.concatenate([mod.intercept_,
-                           mod.coef_[0],
-                           np.array([mod.score(X_powers, Y)])]) # R^2
+    try:
+        # Remove rows with NaNs in either X or Y
+        valid = ~np.isnan(X).flatten() & ~np.isnan(Y).flatten()
+        X = X[valid]
+        Y = Y[valid]
+
+        if len(X) == 0:
+            raise ValueError("No valid data points after filtering NaNs.")
+
+        poly = PolynomialFeatures(degree=k)
+        X_poly = poly.fit_transform(X.reshape(-1, 1))
+        mod = LinearRegression().fit(X_poly, Y)
+        return np.concatenate([mod.intercept_, mod.coef_.flatten()[1:], [mod.score(X_poly, Y)]])
+    
+    except Exception as e:
+        print(f"Polynomial fitting failed: {e}")
+        return np.full((k + 1,), np.nan)  # intercept, k coefs, and R^2
 
 
 def get_best_curve(sdf, census_var='B11002_003E'):
