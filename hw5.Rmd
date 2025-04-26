@@ -1,0 +1,9 @@
+---
+title: "HW5"
+output: pdf_document
+date: "2025-04-26"
+---
+
+This project analyzes how household counts have changed across U.S. counties by using American Community Survey data from 2009–2023. It extracts slope, acceleration, and stability features of household trends (for married and unmarried households separately). These features are normalized and clustered using k-means clustering, with Los Angeles removed as a strong outlier before fitting a 4-cluster solution. The project then attempts to predict the cluster labels using a Random Forest model with the 2020 Social Vulnerability Index (SVI) variables as input, evaluating cross-validation performance. Key variables linked to household count trends are identified from the Random Forest’s feature importance analysis.
+
+The writing and structure of the report could be significantly improved. I would suggest sub-sections and sub-headings for different aspects explored in the report, as well as more detailed descriptions of methodology and results of the graph.
