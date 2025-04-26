@@ -49,6 +49,20 @@ plot(km_bag[, 1], km_bag[, 3])
 dev.off()
 
 km_bag
+
+X_mat <- as.matrix(scaled_df[, -which(names(scaled_df) == 'NAME')])
+X_scaled <- scale(X_mat)   
+pca_out <- prcomp(X_scaled, center=FALSE, scale.=FALSE)
+
+# Find number of PCs for 90% variance
+prop_var <- (pca_out$sdev^2) / sum(pca_out$sdev^2)
+cum_var <- cumsum(prop_var)
+k_90 <- which(cum_var >= 0.9)[1]
+
+W <- pca_out$x[, 1:k_90]
+
+km_out <- kmeans(W, centers=4, nstart=20)
+
 km_out <- kmeans(scaled_df[, -which(names(scaled_df) == 'NAME')], centers=4, nstart=20)
 table(km_out$cluster) 
 scaled_df[km_out$cluster == 3,] # Los Angeles is its own cluster!
