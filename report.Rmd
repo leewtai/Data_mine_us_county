@@ -22,6 +22,7 @@ I think their writing could be clearer and better establish their logic. Right n
 
 The code is written with a lot of redundancy and has many places where readability could be improved. I would also suggest that adding comments to the project would be helpful in making this more professional and usable. I marked a few places where I cleaned the code for readability or logic. 
 There are other places where the clarity in the code makes it harder to understand the ML model. The feature selection and cleaning is done in multiple places and that sequence could be improved. Also applying some streamlining methods would help in the graphical representations of this data, such as more clearly defining axis labels and graph analysis.
+There are other places where they could improve the logic in their ML model. Right now, outliers are singled out to LA but it would be a useful step to identify outliers prior to running kmeans, remove them, and then cluster on the cleaned data.
 
 
 
