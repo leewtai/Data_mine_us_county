@@ -26,8 +26,12 @@ mdf[['FAKE3']] <- sample(mdf$E_AGE17)
 
 
 k <- 6
-folds <- sample(rep(1:k, times=ceiling(nrow(mdf) / k)))
-folds <- folds[1:nrow(mdf)]
+
+#cleaning the code
+#folds <- sample(rep(1:k, times=ceiling(nrow(mdf) / k)))
+#folds <- folds[1:nrow(mdf)]
+folds <- sample(rep(1:k, length.out=nrow(mdf)))
+
 hyper_param_sweep <- c(500, 1000, 2000, 5000)
 rf_bag <- matrix(NA, ncol=2, nrow=k)
 for(i in seq_len(k)){

@@ -2,17 +2,21 @@ library(glue)
 library(Rtsne)
 library(RColorBrewer)
 
-df <- read.csv("../python/curve_feats_counties.csv")
+df <- read.csv("/Users/mishaelkhan/Downloads/curve_feats_counties.csv")
 df <- df[, -which(grepl('2023', names(df)))]
-ts <- read.csv("../python/with_geo_household_cnt.csv")
+ts <- read.csv("/Users/mishaelkhan/Downloads/with_geo_household_cnt.csv")
 
 scaled_df <- apply(df[, -1], 2, scale, center=TRUE, scale=TRUE)
 scaled_df <- as.data.frame(scaled_df)
 scaled_df[['NAME']] <- df$X
 head(scaled_df)
 
-scaled_df[['no_curve_married']] <- (is.na(scaled_df[['married.slope_2022']]) - 0.5) * 2
-scaled_df[['no_curve_unmarried']] <- (is.na(scaled_df[['unmarried.slope_2022']]) - 0.5) * 2
+# improving readability
+#scaled_df[['no_curve_married']] <- (is.na(scaled_df[['married.slope_2022']]) - 0.5) * 2
+#scaled_df[['no_curve_unmarried']] <- (is.na(scaled_df[['unmarried.slope_2022']]) - 0.5) * 2
+scaled_df$no_curve_married <- ifelse(is.na(scaled_df$married.slope_2022), 1, -1)
+scaled_df$no_curve_unmarried <- ifelse(is.na(scaled_df$unmarried.slope_2022), 1, -1)
+
 for(i in seq_len(ncol(scaled_df))){
   is_na_vals <- is.na(scaled_df[, i])
   scaled_df[is_na_vals, i] <- 0 # replaced with mean, just so kmeans will run!

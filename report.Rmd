@@ -1,0 +1,29 @@
+---
+title: "report hw 5"
+output: pdf_document
+date: "2025-04-27"
+---
+
+
+## Project summary
+
+I think this project is meant identify if changes in the SVI over the last 5 years correlate with changes in household type (married vs unmarried households). They identify rate of household changes by tracking a 'household slope' for unmarried
+and married households. They identified 4 other household related features and clustered counties based on that data, identifying 4 main clusters of counties. 
+Then they added in SVI data and used a Random Forest model to predict county clustering based on household behavior. It seems their maximum prediction success hit around 54%.
+They identified that SVI data does hold signal in identifying changes in household types.
+
+
+## Nontechnical improvement
+
+I think their writing could be clearer and better establish their logic. Right now it seems obvious that SVI data would be useful in identifying household changes in different counties. I want to know why they are interested in this information and what purpose it might serve. Would they like to identify housing market trends or establish location specific advertising to hyper pinpoint single vs married customers? That kind of information would make this a more compelling read and tell us why these county trends matter.
+
+
+## Technical improvement
+
+The code is written with a lot of redundancy and has many places where readability could be improved. I would also suggest that adding comments to the project would be helpful in making this more professional and usable. I marked a few places where I cleaned the code for readability or logic. 
+There are other places where the clarity in the code makes it harder to understand the ML model. The feature selection and cleaning is done in multiple places and that sequence could be improved. Also applying some streamlining methods would help in the graphical representations of this data, such as more clearly defining axis labels and graph analysis.
+There are other places where they could improve the logic in their ML model. Right now, outliers are singled out to LA but it would be a useful step to identify outliers prior to running kmeans, remove them, and then cluster on the cleaned data.
+
+
+
+
